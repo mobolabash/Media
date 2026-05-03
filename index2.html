@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Video Player for MacBook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .video-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            cursor: pointer;
+        }
+
+        /* Custom video controls styling for MacBook */
+        video::-webkit-media-controls {
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        video::-webkit-media-controls-panel {
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        video::-webkit-media-controls-play-button {
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 50%;
+        }
+
+        video::-webkit-media-controls-timeline {
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            height: 5px;
+        }
+
+        .video-info {
+            padding: 20px;
+            background: white;
+        }
+
+        .video-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .video-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .video-meta {
+            display: flex;
+            gap: 20px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .video-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .video-meta i {
+            font-style: normal;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .fallback-message {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .video-container {
+                border-radius: 15px;
+            }
+            
+            .video-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <div class="video-wrapper">
+            <!-- HTML5 Video Player with MP4 format -->
+            <video controls preload="metadata" poster="https://via.placeholder.com/800x450/667eea/ffffff?text=Video+Preview">
+                <!-- Primary MP4 source - best compatibility for MacBook -->
+                <source src="your-video-file.mp4" type="video/mp4">
+                
+                <!-- Alternative MP4 with different codec for Mac compatibility -->
+                <source src="your-video-file.mp4" type="video/mp4; codecs='avc1.42E01E, mp4a.40.2'">
+                
+                <!-- Fallback text for browsers that don't support video -->
+                Your browser does not support the video tag. 
+                Please download the video in MP4 format compatible with MacBook.
+            </video>
+        </div>
+        
+        <div class="video-info">
+            <h1 class="video-title">MacBook Optimized Video Player</h1>
+            <p class="video-description">
+                This video player is specifically optimized for MacBook environment. 
+                The MP4 format with H.264 codec ensures smooth playback on all Mac devices.
+                The video includes native macOS style controls for the best user experience.
+            </p>
+            
+            <div class="video-meta">
+                <span>
+                    <i>Format:</i> MP4 (H.264/AAC)
+                </span>
+                <span>
+                    <i>Optimized for:</i> macOS
+                </span>
+                <span>
+                    <i>Playback:</i> HTML5
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional JavaScript for enhanced MacBook compatibility -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.querySelector('video');
+            
+            // Check if video is supported and handle any playback issues
+            if (video) {
+                // Detect if running on Mac
+                const isMac = /Mac|iMac|MacBook|Macintosh/.test(navigator.userAgent);
+                
+                if (isMac) {
+                    console.log('Running on Mac - optimized video playback');
+                    
+                    // Ensure video loads properly on Mac
+                    video.addEventListener('loadedmetadata', function() {
+                        console.log('Video metadata loaded successfully on Mac');
+                    });
+                    
+                    video.addEventListener('error', function(e) {
+                        console.error('Video error on Mac:', e);
+                        // Try to reload with different settings
+                        video.load();
+                    });
+                }
+                
+                // Add keyboard support for spacebar play/pause
+                document.addEventListener('keydown', function(e) {
+                    if (e.code === 'Space' && document.activeElement !== video) {
+                        e.preventDefault();
+                        if (video.paused) {
+                            video.play();
+                        } else {
+                            video.pause();
+                        }
+                    }
+                });
+                
+                // Double-click to fullscreen (Mac friendly)
+                video.addEventListener('dblclick', function() {
+                    if (video.requestFullscreen) {
+                        video.requestFullscreen();
+                    } else if (video.webkitRequestFullscreen) { // Safari for Mac
+                        video.webkitRequestFullscreen();
+                    }
+                });
+            }
+        });
+        
+        // Fallback for Safari on Mac if video doesn't load
+        window.addEventListener('load', function() {
+            const video = document.querySelector('video');
+            const sources = video.querySelectorAll('source');
+            
+            // Check if video can play MP4
+            if (video.canPlayType) {
+                const canPlayMP4 = video.canPlayType('video/mp4');
+                console.log('MP4 support:', canPlayMP4);
+                
+                if (canPlayMP4 === 'no' || canPlayMP4 === '') {
+                    // If MP4 is not supported, show fallback message
+                    const fallbackDiv = document.createElement('div');
+                    fallbackDiv.className = 'fallback-message';
+                    fallbackDiv.innerHTML = '⚠️ Your browser does not support MP4 playback. Please try Safari or Chrome on Mac.';
+                    video.parentNode.insertBefore(fallbackDiv, video.nextSibling);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

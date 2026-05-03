@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Video Player for MacBook - Audio Fixed</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .video-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            cursor: pointer;
+        }
+
+        /* Custom video controls styling for MacBook */
+        video::-webkit-media-controls {
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        video::-webkit-media-controls-panel {
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        video::-webkit-media-controls-play-button {
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 50%;
+        }
+
+        video::-webkit-media-controls-timeline {
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            height: 5px;
+        }
+
+        /* Audio indicator styling */
+        .audio-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
+        }
+
+        .audio-indicator.off {
+            background: rgba(220, 53, 69, 0.9);
+        }
+
+        .audio-indicator i {
+            font-style: normal;
+            font-size: 1.1rem;
+        }
+
+        .video-info {
+            padding: 20px;
+            background: white;
+        }
+
+        .video-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .video-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .video-meta {
+            display: flex;
+            gap: 20px;
+            color: #999;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .video-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .video-meta i {
+            font-style: normal;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .video-selector {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .video-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+
+        .video-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .video-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .audio-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .audio-controls h3 {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .audio-test {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .audio-test-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .audio-test-btn:hover {
+            background: #218838;
+        }
+
+        .volume-slider {
+            flex: 1;
+            min-width: 200px;
+            height: 5px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .fallback-message {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #dc3545;
+        }
+
+        .video-status {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #28a745;
+        }
+
+        @media (max-width: 768px) {
+            .video-container {
+                border-radius: 15px;
+            }
+            
+            .video-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <div class="video-wrapper">
+            <!-- Audio Indicator -->
+            <div id="audioIndicator" class="audio-indicator">
+                <i>🔊</i> <span id="audioStatus">Audio Available</span>
+            </div>
+            
+            <!-- HTML5 Video Player with Sample MP4 files -->
+            <video id="mainVideo" controls preload="metadata" poster="https://via.placeholder.com/800x450/667eea/ffffff?text=Click+Play+to+Start" crossorigin="anonymous">
+                <!-- Primary MP4 source - will be set by JavaScript -->
+                <source id="videoSource" src="" type="video/mp4">
+                
+                <!-- Fallback text for browsers that don't support video -->
+                Your browser does not support the video tag. 
+                Please download a modern browser like Safari or Chrome for Mac.
+            </video>
+        </div>
+        
+        <div class="video-info">
+            <h1 class="video-title">MacBook Pro Optimized Video Player</h1>
+            <p class="video-description">
+                This video player is specifically optimized for MacBook Pro with audio fixes. 
+                The MP4 format with H.264 codec and AAC audio ensures smooth playback on all Mac devices.
+            </p>
+            
+            <div class="video-selector">
+                <button class="video-btn active" data-video="sample1" data-url="https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" data-audio="true">
+                    🐰 Big Buck Bunny (With Audio)
+                </button>
+                <button class="video-btn" data-video="sample2" data-url="https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" data-audio="true">
+                    🐘 Elephants Dream (With Audio)
+                </button>
+                <button class="video-btn" data-video="sample3" data-url="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" data-audio="true">
+                    🔥 Bigger Blazes (With Audio)
+                </button>
+                <button class="video-btn" data-video="sample4" data-url="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" data-audio="true">
+                    🏃 Bigger Escapes (With Audio)
+                </button>
+                <button class="video-btn" data-video="sample5" data-url="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" data-audio="true">
+                    🎉 Bigger Fun (With Audio)
+                </button>
+            </div>
+            
+            <div class="audio-controls">
+                <h3>🔊 Audio Troubleshooting for MacBook Pro</h3>
+                <div class="audio-test">
+                    <button id="testAudioBtn" class="audio-test-btn">🔊 Test Speaker</button>
+                    <input type="range" id="volumeControl" class="volume-slider" min="0" max="1" step="0.1" value="1">
+                    <span id="volumeValue">100%</span>
+                    <button id="unmuteBtn" class="video-btn">🔊 Unmute All</button>
+                </div>
+                <p id="audioDebug" style="font-size: 0.8rem; color: #666; margin-top: 10px;"></p>
+            </div>
+            
+            <div class="video-meta">
+                <span>
+                    <i>Format:</i> MP4 (H.264/AAC)
+                </span>
+                <span>
+                    <i>Optimized for:</i> macOS
+                </span>
+                <span>
+                    <i>Playback:</i> HTML5
+                </span>
+                <span>
+                    <i>Audio:</i> AAC, 48kHz
+                </span>
+            </div>
+            
+            <div id="videoStatus" class="video-status">
+                ✅ Ready to play - Click any sample video above
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Fix JavaScript for MacBook Pro -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('mainVideo');
+            const videoSource = document.getElementById('videoSource');
+            const videoButtons = document.querySelectorAll('.video-btn');
+            const videoStatus = document.getElementById('videoStatus');
+            const audioIndicator = document.getElementById('audioIndicator');
+            const audioStatus = document.getElementById('audioStatus');
+            const testAudioBtn = document.getElementById('testAudioBtn');
+            const volumeControl = document.getElementById('volumeControl');
+            const volumeValue = document.getElementById('volumeValue');
+            const unmuteBtn = document.getElementById('unmuteBtn');
+            const audioDebug = document.getElementById('audioDebug');
+            
+            // Force audio context for MacBook Pro
+            let audioContext = null;
+            
+            // Check if running on Mac
+            const isMac = /Mac|iMac|MacBook|Macintosh/.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            
+            if (isMac) {
+                console.log('✅ Running on Mac - applying audio fixes');
+                audioDebug.innerHTML = '✅ Mac detected - Audio fixes applied';
+            }
+            
+            // Function to initialize audio context (required for some Mac browsers)
+            function initAudioContext() {
+                try {
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        if (audioContext.state === 'suspended') {
+                            audioContext.resume().then(() => {
+                                console.log('AudioContext resumed successfully');
+                                audioDebug.innerHTML = '✅ Audio context initialized';
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.log('AudioContext not supported:', e);
+                }
+            }
+            
+            // Function to check and fix audio
+            function checkAudio() {
+                // Force audio to be enabled
+                video.muted = false;
+                video.volume = volumeControl.value;
+                
+                // Check if video has audio tracks
+                if (video.audioTracks && video.audioTracks.length > 0) {
+                    const hasAudio = video.audioTracks.length > 0;
+                    audioIndicator.className = hasAudio ? 'audio-indicator' : 'audio-indicator off';
+                    audioStatus.textContent = hasAudio ? 'Audio Available' : 'No Audio Track';
+                    
+                    // Enable all audio tracks
+                    for (let i = 0; i < video.audioTracks.length; i++) {
+                        video.audioTracks[i].enabled = true;
+                    }
+                } else {
+                    // For browsers that don't support audioTracks API
+                    audioIndicator.className = 'audio-indicator';
+                    audioStatus.textContent = 'Audio Track Present';
+                }
+                
+                // Safari specific fix
+                if (isSafari && isMac) {
+                    video.setAttribute('playsinline', true);
+                    // Force audio output
+                    video.defaultMuted = false;
+                }
+            }
+            
+            // Set default video (Big Buck Bunny)
+            videoSource.src = 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+            video.load();
+            
+            // Video button click handlers
+            videoButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active button
+                    videoButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Get video URL
+                    const videoUrl = this.dataset.url;
+                    const videoName = this.textContent.trim();
+                    
+                    // Update video source
+                    videoSource.src = videoUrl;
+                    video.load();
+                    
+                    // Update status
+                    videoStatus.innerHTML = `📹 Loading: ${videoName}...`;
+                    
+                    // Play video when loaded
+                    setTimeout(() => {
+                        video.play().then(() => {
+                            videoStatus.innerHTML = `▶️ Now playing: ${videoName}`;
+                            checkAudio();
+                            
+                            // Force unmute
+                            video.muted = false;
+                            
+                            // Initialize audio context for Mac
+                            if (isMac) {
+                                initAudioContext();
+                            }
+                        }).catch(error => {
+                            console.log('Auto-play prevented:', error);
+                            videoStatus.innerHTML = `⏸️ Ready to play: ${videoName} (click play)`;
+                        });
+                    }, 500);
+                });
+            });
+            
+            // Test audio button
+            testAudioBtn.addEventListener('click', function() {
+                // Create a test tone
+                try {
+                    initAudioContext();
+                    
+                    if (audioContext) {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 440; // A4 note
+                        gainNode.gain.value = 0.1; // Low volume
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.5); // Play for 0.5 seconds
+                        
+                        audioDebug.innerHTML = '✅ Test tone played - check your speakers';
+                    } else {
+                        // Fallback: try to play a short audio beep using Web Audio
+                        const beep = new Audio();
+                        beep.src = 'data:audio/wav;base64,UklGRlwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVoAAACAgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f39/f3+AgICAf39/f38=';
+                        beep.volume = 0.3;
+                        beep.play().then(() => {
+                            audioDebug.innerHTML = '✅ Test sound played';
+                        }).catch(e => {
+                            audioDebug.innerHTML = '❌ Speaker test failed - check system audio';
+                        });
+                    }
+                } catch (e) {
+                    console.error('Audio test error:', e);
+                    audioDebug.innerHTML = '❌ Audio test failed';
+                }
+            });
+            
+            // Volume control
+            volumeControl.addEventListener('input', function() {
+                const vol = this.value;
+                video.volume = vol;
+                volumeValue.textContent = Math.round(vol * 100) + '%';
+                
+                if (vol == 0) {
+                    audioIndicator.className = 'audio-indicator off';
+                    audioStatus.textContent = 'Muted';
+                } else {
+                    audioIndicator.className = 'audio-indicator';
+                    audioStatus.textContent = 'Audio Playing';
+                }
+            });
+            
+            // Unmute button
+            unmuteBtn.addEventListener('click', function() {
+                video.muted = false;
+                video.volume = volumeControl.value;
+                
+                // Try to resume audio context
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                audioIndicator.className = 'audio-indicator';
+                audioStatus.textContent = 'Audio Enabled';
+                audioDebug.innerHTML = '✅ Audio unmuted';
+            });
+            
+            // Video event listeners
+            if (video) {
+                video.addEventListener('loadedmetadata', function() {
+                    console.log('Video metadata loaded successfully');
+                    checkAudio();
+                    
+                    // Log audio info
+                    if (video.audioTracks) {
+                        console.log('Audio tracks:', video.audioTracks.length);
+                    }
+                    
+                    const activeButton = document.querySelector('.video-btn.active');
+                    if (activeButton) {
+                        videoStatus.innerHTML = `✅ Loaded: ${activeButton.textContent.trim()}`;
+                    }
+                });
+                
+                video.addEventListener('error', function(e) {
+                    console.error('Video error:', e);
+                    videoStatus.innerHTML = '❌ Error loading video - trying alternative source...';
+                    
+                    // Try to reload
+                    setTimeout(() => {
+                        video.load();
+                    }, 1000);
+                });
+                
+                video.addEventListener('playing', function() {
+                    const activeButton = document.querySelector('.video-btn.active');
+                    if (activeButton) {
+                        videoStatus.innerHTML = `▶️ Playing: ${activeButton.textContent.trim()}`;
+                    }
+                    
+                    // Double-check audio on play
+                    checkAudio();
+                });
+                
+                video.addEventListener('volumechange', function() {
+                    if (video.muted || video.volume === 0) {
+                        audioIndicator.className = 'audio-indicator off';
+                        audioStatus.textContent = 'Muted';
+                    } else {
+                        audioIndicator.className = 'audio-indicator';
+                        audioStatus.textContent = 'Audio Playing';
+                    }
+                });
+                
+                // Add keyboard support for spacebar play/pause
+                document.addEventListener('keydown', function(e) {
+                    if (e.code === 'Space' && document.activeElement !== video) {
+                        e.preventDefault();
+                        if (video.paused) {
+                            video.play();
+                        } else {
+                            video.pause();
+                        }
+                    }
+                });
+                
+                // Double-click to fullscreen
+                video.addEventListener('dblclick', function() {
+                    if (video.requestFullscreen) {
+                        video.requestFullscreen();
+                    } else if (video.webkitRequestFullscreen) {
+                        video.webkitRequestFullscreen();
+                    }
+                });
+            }
+            
+            // Initialize
+            checkAudio();
+            
+            // For Safari on Mac, we need user interaction to enable audio
+            if (isSafari && isMac) {
+                document.body.addEventListener('click', function enableAudio() {
+                    initAudioContext();
+                    video.muted = false;
+                    document.body.removeEventListener('click', enableAudio);
+                    audioDebug.innerHTML = '✅ Audio enabled via user interaction';
+                }, { once: true });
+            }
+            
+            // Check MP4 compatibility
+            if (video.canPlayType) {
+                const canPlayMP4 = video.canPlayType('video/mp4');
+                console.log('MP4 support:', canPlayMP4);
+                
+                if (canPlayMP4 === 'no' || canPlayMP4 === '') {
+                    const fallbackDiv = document.createElement('div');
+                    fallbackDiv.className = 'fallback-message';
+                    fallbackDiv.innerHTML = '⚠️ Your browser does not support MP4 playback. Please try Safari or Chrome on Mac.';
+                    document.querySelector('.video-info').appendChild(fallbackDiv);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
